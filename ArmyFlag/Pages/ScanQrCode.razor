@@ -1,0 +1,134 @@
+﻿@page "/scanqrcode"
+
+@using ZXingBlazor.Components
+@using System.Diagnostics
+
+<h3>扫描二维码</h3>
+
+<ul class="list-group">
+    <li class="list-group-item">
+        <button class="btn btn-primary" type="button" @onclick="()=>{OpenBarcodeReader(1);}">
+            <span class="oi oi-vertical-align-center"></span>
+        </button>
+    </li>
+    <li class="list-group-item">
+        <button class="btn btn-primary" type="button" @onclick="()=>{OpenBarcodeReader(2); }">
+            <span class="oi oi-vertical-align-center"></span>
+        </button>
+    </li>
+</ul>
+
+@if (ShowScanBarcode)
+{
+    <BarcodeReader ScanResult="BarcodeReaderOnScanResult"
+               Close="BarcodeReaderOnClose"
+               OnError="BarcodeReaderOnError"
+               ScanBtnTitle="Scan"
+               ResetBtnTitle="Reset"
+               CloseBtnTitle="Close"
+               SelectDeviceBtnTitle="Select Camera" />
+}
+
+<div class="m-2">
+    <p>扫描结果1: <button class="btn btn-primary" @onclick="ResetResult1">重置</button></p>
+    <p>@Value1</p>
+</div>
+<div class="m-2">
+    <p>扫描结果2: <button class="btn btn-primary" @onclick="ResetResult2">重置</button></p>
+    <p>@Value2</p>
+</div>
+<div class="m-2">
+    <p>结果: <button class="btn btn-primary" @onclick="Compare">比较</button></p>
+    <p>@Result</p>
+</div>
+
+@code {
+    private string Value1 = "";
+    private string Value2 = "";
+    private string Result = "";
+
+    private int Num1 = 0;
+    private int Num2 = 0;
+
+    private int Index = 0;
+
+    //显示扫码界面
+    private bool ShowScanBarcode = false;
+
+
+    private void OpenBarcodeReader(int i)
+    {
+        Index = i;
+
+        if (i == 1)
+        {
+            Num1 = 0;
+            Value1 = "";
+        }
+        else if (i == 2)
+        {
+            Num2 = 0;
+            Value2 = "";
+        }
+
+        ShowScanBarcode = true;
+    }
+
+    private void BarcodeReaderOnScanResult(string result)
+    {
+        Debug.WriteLine($"扫码结果: {result}");
+
+        if (Index == 1 && int.TryParse(result, out Num1))
+        {
+            Value1 = "结果已采样";
+        }
+        else if (Index == 2 && int.TryParse(result, out Num2))
+        {
+            Value2 = "结果已采样";
+        }
+
+        Compare();
+
+        ShowScanBarcode = false;
+    }
+
+    private void BarcodeReaderOnClose()
+    {
+        ShowScanBarcode = false;
+    }
+
+    private Task BarcodeReaderOnError(string message)
+    {
+
+        Result = message;
+
+        return Task.CompletedTask;
+    }
+
+
+    private void ResetResult1()
+    {
+        this.Value1 = "";
+        this.Num1 = 0;
+        this.Result = "";
+    }
+
+    private void ResetResult2()
+    {
+        this.Value2 = "";
+        this.Num2 = 0;
+        this.Result = "";
+    }
+
+    private void Compare()
+    {
+        if (Num1 > 0 && Num2 > 0)
+        {
+            Result = Num1 > Num2 ? "棋子1大" : (Num1 != Num2 ? "棋子2大" : "一样大");
+        }
+        else
+        {
+            Result = $" {(Num1 == 0 ? "棋子1" : "")} {(Num2 == 0 ? "棋子2" : "")} 采样信息不完整,请重新采样!";
+        }
+    }
+}
